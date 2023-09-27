@@ -8,22 +8,16 @@ use App\Models\PDV as PDVs;
 use App\Models\Venda;
 use Filament\Forms\Components\DatePicker;
 use Filament\Pages\Page;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
-use Filament\Tables\Actions\BulkAction;
-use Filament\Tables\Actions\ForceDeleteAction;
+
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Contracts\Database\Eloquent\Builder;
-use Filament\Tables\Table;
-use Livewire\Component;
-use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Collection;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Get;
@@ -35,12 +29,12 @@ use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Grid;
+use Filament\Tables\Actions\DeleteAction;
 
 class PDV extends  page implements HasForms, HasTable
 {
 
     use InteractsWithForms, InteractsWithTable;
-
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
@@ -55,19 +49,17 @@ class PDV extends  page implements HasForms, HasTable
     public $pdv;
     public $venda;
 
-
-
     public function mount(): void
     {
         $this->form->fill();
-        $this->venda =  random_int(1000, 9999);
+        $this->venda =  random_int(0000000, 9999999);
     }
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Section::make('Venda')
+                Section::make('Ponto de Venda')
                     ->columns(4)
                     ->schema([
                         TextInput::make('produto_id')
@@ -81,11 +73,7 @@ class PDV extends  page implements HasForms, HasTable
 
                                 $this->updated($state, $state);
                             }),
-                       
-
-
-
-
+   
                     ]),
             ]);
     }
@@ -93,15 +81,10 @@ class PDV extends  page implements HasForms, HasTable
     public function updated($name, $value): void
     {
 
-
-
         if ($name === 'produto_id') {
 
             $produto = Produto::where('codbar', '=', $value)->first();
-
-
-
-            //     dd($this->venda);
+          
             $addProduto = [
                 'produto_id' => $produto->id,
                 'venda_id' => $this->venda,
@@ -155,22 +138,17 @@ class PDV extends  page implements HasForms, HasTable
                 ->summarize(Sum::make()->label('TOTAL')->money('BRL')),
         ];
     }
-
-
-
     protected function getHeaderActions(): array
     {
         return [
-
             CreateAction::make()
                 ->label('Finalizar Venda')
                 ->model(Venda::class)
-
+                ->createAnother(false)
+                ->successNotificationTitle('Venda em PDV finalizada com sucesso!')
                 ->form([
                     Grid::make('3')
                         ->schema([
-
-
                             TextInput::make('venda_id_pdv')
                                 ->label('Código da Venda')
                                 ->disabled()
@@ -186,13 +164,9 @@ class PDV extends  page implements HasForms, HasTable
                                     
                                 ])
                                 ->required(),
-
                             DatePicker::make('data_venda')
                                 ->label('Data da Venda')
                                 ->default(now()),
-
-                            
-
                             TextInput::make('valor_total')
                                 ->label('Valor Total')
                                 ->disabled()
@@ -210,12 +184,34 @@ class PDV extends  page implements HasForms, HasTable
                             TextInput::make('troco')
                                 ->disabled()
                                 ->label('Troco'),    
-                                
                         ])
 
-                ]),
+                ]) //->successRedirectUrl(route('filament.admin.pages.p-d-v'))
+                    ->after(function () {
+                       
+                        $itensPDV = PDVs::where('venda_id', $this->venda)->get();
+                        
+                        foreach($itensPDV as $itens) {
+                              $updProduto = Produto::find($itens->produto_id);
+                              $updProduto->estoque -= $itens->qtd;
+                              $updProduto->save();
+                            
+                           
+                        }
+
+                        
+                    })
         ];
     }
 
-    
+    protected function getTableActions(): array
+    {
+        return [
+            
+           DeleteAction::make('Excluir'),
+  
+        ];
+        
+    }
+   
 }
