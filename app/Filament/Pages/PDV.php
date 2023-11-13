@@ -13,7 +13,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
-
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -24,12 +23,11 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Tables\Columns\TextInputColumn;
 use Illuminate\Database\Eloquent\Model;
-use PhpParser\Node\Expr\FuncCall;
-use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
-use Filament\Actions\EditAction;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Radio;
 use Filament\Tables\Actions\DeleteAction;
+
 
 class PDV extends  page implements HasForms, HasTable
 {
@@ -52,7 +50,7 @@ class PDV extends  page implements HasForms, HasTable
     public function mount(): void
     {
         $this->form->fill();
-        $this->venda =  random_int(0000000, 9999999);
+        $this->venda =  random_int(0000000000, 9999999999);
     }
 
     public function form(Form $form): Form
@@ -183,10 +181,20 @@ class PDV extends  page implements HasForms, HasTable
                                 ->autofocus(),
                             TextInput::make('troco')
                                 ->disabled()
-                                ->label('Troco'),    
+                                ->label('Troco'),   
+                            Radio::make('financeiro')
+                                ->columnSpan('2')
+                                ->label('Lançamento Financeiro')
+                                                             
+                                ->options([
+                                    '1' => 'Direto no Caixa',
+                                    '2' => 'Conta a Receber'
+                                ])->default('1')
+                                
+                                
                         ])
 
-                ]) //->successRedirectUrl(route('filament.admin.pages.p-d-v'))
+                ]) 
                     ->after(function () {
                        
                         $itensPDV = PDVs::where('venda_id', $this->venda)->get();
@@ -195,12 +203,24 @@ class PDV extends  page implements HasForms, HasTable
                               $updProduto = Produto::find($itens->produto_id);
                               $updProduto->estoque -= $itens->qtd;
                               $updProduto->save();
-                            
+
                            
                         }
 
                         
-                    })
+                    })->successRedirectUrl( function() {
+                        $var = 2;
+                            if($var == 1) {
+                               return route('filament.admin.pages.p-d-v');
+                            }
+                            else {
+                              return  route('filament.admin.resources.produtos.index'); 
+                            }
+                        
+                        }
+                    
+                    )
+                        
         ];
     }
 

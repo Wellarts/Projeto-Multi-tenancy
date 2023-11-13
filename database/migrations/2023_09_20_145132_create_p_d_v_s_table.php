@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('p_d_v_s', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('produto_id')->constrained('produtos')->restrictOnDelete();
+            $table->foreignId('produto_id');
+            $table->string('venda_id');
             $table->decimal('valor_venda',10,2);
             $table->string('qtd');
             $table->decimal('acres_desc',10,2);

@@ -24,22 +24,11 @@ class ProdutoResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('nome')
-                    ->live(onBlur: true)
-                    ->afterStateUpdated( function($state, Set $set) {
-                       dd('teste');
-                    })
-                    ->required()
-                    ->maxLength(255),
+                Forms\Components\TextInput::make('nome'),
+                    
                 Forms\Components\TextInput::make('estoque')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('venda_id')
-                    ->numeric()
-                    ->default( function() {
-                        return random_int(1000, 9999);
-                    })
-                    ->label('Venda'),
                 Forms\Components\TextInput::make('valor_compra')
                     ->required()
                     ->numeric(),
